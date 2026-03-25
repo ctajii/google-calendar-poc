@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar Events</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .tally {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 0.3rem 1rem;
+      background: #1a1a2e;
+      border: 1px solid #333;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      color: #8ab4f8;
+    }
+
+    .loading, .error {
+      text-align: center;
+      padding: 3rem;
+      font-size: 1.1rem;
+      color: #888;
+    }
+
+    .error { color: #f28b82; }
+
+    .events {
+      max-width: 700px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .month-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #8ab4f8;
+      margin-top: 1rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid #222;
+    }
+
+    .event {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      transition: border-color 0.15s;
+    }
+
+    .event:hover { border-color: #444; }
+
+    .event-title {
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 0.35rem;
+    }
+
+    .event-date {
+      font-size: 0.85rem;
+      color: #999;
+    }
+
+    .event-location {
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Upcoming Events</h1>
+    <div class="tally" id="tally">Loading...</div>
+  </header>
+  <div id="content">
+    <div class="loading">Fetching events...</div>
+  </div>
+
+  <script>
+    async function loadEvents() {
+      const content = document.getElementById("content");
+      const tally = document.getElementById("tally");
+
+      try {
+        const res = await fetch("/api/events");
+        const data = await res.json();
+
+        if (!res.ok) {
+          content.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+          tally.textContent = "Error";
+          return;
+        }
+
+        tally.textContent = `${data.count} event${data.count !== 1 ? "s" : ""} upcoming`;
+
+        if (data.events.length === 0) {
+          content.innerHTML = `<div class="loading">No upcoming events</div>`;
+          return;
+        }
+
+        let html = '<div class="events">';
+        let currentMonth = "";
+
+        for (const event of data.events) {
+          // For all-day events, the date string is "YYYY-MM-DD" which JS parses as UTC midnight,
+          // shifting it back a day in US timezones. Append T00:00:00 to force local time.
+          const date = event.allDay ? new Date(event.start + "T00:00:00") : new Date(event.start);
+          const month = date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+          if (month !== currentMonth) {
+            currentMonth = month;
+            html += `<div class="month-label">${month}</div>`;
+          }
+
+          const dateStr = event.allDay
+            ? date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+            : date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) +
+              " · " +
+              date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+
+          html += `
+            <div class="event">
+              <div class="event-title">${escapeHtml(event.title)}</div>
+              <div class="event-date">${dateStr}</div>
+              ${event.location ? `<div class="event-location">📍 ${escapeHtml(event.location)}</div>` : ""}
+            </div>`;
+        }
+
+        html += "</div>";
+        content.innerHTML = html;
+      } catch (err) {
+        content.innerHTML = `<div class="error">Failed to load events</div>`;
+        tally.textContent = "Error";
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    loadEvents();
+  </script>
+</body>
+</html>

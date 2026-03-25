@@ -40,14 +40,16 @@ app.get("/api/events", async (req, res) => {
       return res.status(response.status).json({ error: data.error?.message || "Google API error" });
     }
 
-    const events = (data.items || []).map((event) => ({
-      title: event.summary || "(No title)",
-      start: event.start?.dateTime || event.start?.date,
-      end: event.end?.dateTime || event.end?.date,
-      location: event.location || null,
-      description: event.description || null,
-      allDay: !event.start?.dateTime,
-    }));
+    const events = (data.items || [])
+      .filter((event) => !(event.summary || "").toLowerCase().includes("birthday"))
+      .map((event) => ({
+        title: event.summary || "(No title)",
+        start: event.start?.dateTime || event.start?.date,
+        end: event.end?.dateTime || event.end?.date,
+        location: event.location || null,
+        description: event.description || null,
+        allDay: !event.start?.dateTime,
+      }));
 
     res.json({ count: events.length, events });
   } catch (err) {

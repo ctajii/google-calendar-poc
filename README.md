@@ -2,7 +2,7 @@
 
 A simple website that displays a live tally and chronological list of upcoming Google Calendar events.
 
-![Preview](screenshots/preview.png)
+![Preview](screenshots/sample_screenshot.png)
 
 ## Setup
 

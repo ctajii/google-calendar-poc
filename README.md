@@ -1,8 +1,17 @@
 # Google Calendar PoC
 
-A simple website that displays a live tally and chronological list of upcoming Google Calendar events.
+A simple website that pulls live Google Calendar events via a backend proxy (so your API key is never exposed to the browser). Two example views are included:
 
-![Preview](screenshots/sample_screenshot.png)
+- **List view** (`/` → `index.html`) — chronological event list grouped by month with a live count
+- **Calendar view** (`/calendar.html`) — interactive month grid with event chips and hover tooltips, prev/next navigation
+
+## List View
+
+![List Example](screenshots/List%20Example.png)
+
+## Calendar View
+
+![Calendar Example](screenshots/Calendar%20Example.png)
 
 ## Setup
 
